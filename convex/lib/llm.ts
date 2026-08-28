@@ -141,6 +141,25 @@ export async function matchHabitUpdate(
   };
 }
 
+/**
+ * A short, warm encouragement note for the daily reminder digest, referencing
+ * the user's habits and streaks.
+ */
+export async function generateEncouragement(
+  habits: { name: string; currentStreak: number }[],
+): Promise<string> {
+  const result = await chatJson(
+    "Write 2-3 warm, specific sentences encouraging someone to keep up their " +
+      "habits today. Reference their habit names and streaks naturally. Reply " +
+      'as JSON: {"text": string}. Plain text, no greeting, no sign-off.',
+    `Their habits and current streaks:\n` +
+      habits.map((h) => `- ${h.name}: ${h.currentStreak}-day streak`).join("\n"),
+  );
+  return typeof result.text === "string"
+    ? result.text
+    : "A small step today keeps the momentum going.";
+}
+
 /** Generate a short, warm confirmation reply for a logged habit update. */
 export async function generateConfirmationReply(
   habitName: string,

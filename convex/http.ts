@@ -2,7 +2,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { matchHabitUpdate, generateConfirmationReply } from "./lib/llm";
-import { sendReply } from "./lib/agentmail";
+import { sendEmail } from "./lib/agentmail";
 
 const http = httpRouter();
 
@@ -112,7 +112,7 @@ http.route({
       habit.currentStreak + 1,
       match.note,
     ).catch(() => `Logged! Keep it up.`);
-    await sendReply(fromAddress, `Re: ${subject}`, reply);
+    await sendEmail(fromAddress, `Re: ${subject}`, reply);
 
     return new Response("OK", { status: 200 });
   }),

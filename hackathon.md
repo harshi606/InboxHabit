@@ -2,20 +2,21 @@
 
 - **Project:** InboxHabit
 - **Event:** Convex All Gas Hackathon
-- **What it does:** Real-time habit tracker: log progress by emailing the
-  app's shared AI inbox, and watch the streak update live.
+- **What it does:** Real-time habit tracker run by email: log progress by
+  emailing the app's shared AI inbox (streak updates live), and get a daily
+  digest emailed back for the habits still to do.
 - **Live app:** not deployed
 - **Repo:** https://github.com/harshi606/InboxHabit
 - **Frontend:** Convex static hosting
 - **Convex deployment:** https://adventurous-swordfish-799.convex.cloud (dev)
 - **Components:** none
 - **Convex features:** schema, indexes, queries, mutations, actions, HTTP
-  actions, realtime queries
+  actions, realtime queries, crons / scheduled functions
 - **Auth:** none
 - **AI models:** openai/gpt-oss-120b via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T20:34:32Z
+- **Last updated:** 2026-08-28T21:27:23Z
 
 ## Log
 
@@ -96,7 +97,7 @@ endpoint is unauthenticated (`AGENTMAIL_WEBHOOK_SECRET` unset, and the
 shared-secret check in `http.ts` doesn't implement AgentMail's Svix
 signatures); the frontend is not yet published.
 
-### 2026-08-28 - working tree
+### 2026-08-28 - e90cd37
 Replaced per-habit AgentMail inboxes with a single shared app inbox
 (`AGENTMAIL_INBOX_ADDRESS`), because the free tier caps at 3 inboxes. New
 `userSettings` table (`convex/userSettings.ts`) stores each anonymous user's
@@ -117,3 +118,16 @@ from that address logs *Morning run* only (streak -> 1, mood "energized"),
 a confirmation reply is sent from `inboxhabit@agentmail.to`, and both an
 unknown sender and an unrelated email from the registered address are
 accepted with 200 and no log.
+
+### 2026-08-28 - working tree
+Added a proactive daily reminder digest. A Convex cron (`convex/crons.ts`,
+13:00 UTC) runs `internal.digests.sendDaily` (`convex/digests.ts`): for
+every registered user it collects the habits not yet completed that day
+and, if any, emails one digest — an LLM-written encouragement line
+(`generateEncouragement` in `convex/lib/llm.ts`), then each habit with its
+streak and tips, and a "reply to log" footer. `convex/lib/agentmail.ts`'s
+send helper was renamed `sendReply` -> `sendEmail` and is now shared by the
+digest and the inbound confirmation. First Convex component-free scheduled
+job in the app. Verified by running `digests:sendDaily` directly: a due
+habit produced a "Your habits for today 🌱" email to the registered
+address; users with everything done get nothing.

@@ -1,12 +1,14 @@
 # InboxHabit
 
-A real-time habit tracker you can update by email. The app has one shared
+A real-time habit tracker you run by email. The app has one shared
 AI-managed inbox (via [AgentMail](https://agentmail.to)); email it from the
 address you registered and an LLM (via [Groq](https://groq.com)) works out
 which of your habits you're reporting on, whether you completed it, and
-updates your streak live. Creating a habit can optionally crawl an
-inspiration URL with [Firecrawl](https://firecrawl.dev) and turn it into a
-few short tips via the same LLM.
+updates your streak live. Once a day it emails you back a digest of the
+habits you haven't done yet, with their tips and a line of encouragement.
+Creating a habit can optionally crawl an inspiration URL with
+[Firecrawl](https://firecrawl.dev) and turn it into a few short tips via the
+same LLM.
 
 Built for the Convex All Gas Hackathon on [Convex](https://convex.dev).
 
@@ -83,11 +85,13 @@ convex/
   userSettings.ts      register/look up a user's email address
   settings.ts          expose the shared inbox address to the frontend
   http.ts              AgentMail inbound-webhook handler (sender -> user, LLM -> habit)
+  crons.ts             schedule the daily digest
+  digests.ts           build + send each user's daily reminder digest
   admin.ts             internal wipe helper for resetting a dev deployment
   lib/
-    llm.ts             tips, habit-match-from-email, confirmation replies
+    llm.ts             tips, habit-match-from-email, encouragement, replies
     firecrawl.ts        scrape a URL to markdown
-    agentmail.ts        send a reply from the shared inbox
+    agentmail.ts        send an email from the shared inbox
 src/
   App.tsx, components/  dashboard UI (EmailSetup, NewHabitForm, HabitCard)
   lib/userId.ts         anonymous local user id

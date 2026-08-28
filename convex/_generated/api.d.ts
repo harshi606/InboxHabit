@@ -9,7 +9,9 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as crons from "../crons.js";
 import type * as dateUtils from "../dateUtils.js";
+import type * as digests from "../digests.js";
 import type * as entries from "../entries.js";
 import type * as habits from "../habits.js";
 import type * as http from "../http.js";
@@ -27,7 +29,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  crons: typeof crons;
   dateUtils: typeof dateUtils;
+  digests: typeof digests;
   entries: typeof entries;
   habits: typeof habits;
   http: typeof http;

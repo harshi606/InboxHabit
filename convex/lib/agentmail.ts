@@ -26,11 +26,12 @@ function authHeaders(): Record<string, string> {
 }
 
 /**
- * Send a plain-text reply from the shared inbox. Best-effort; never throws.
+ * Send a plain-text email from the shared inbox. Best-effort; never throws.
  * The inbox is identified by the AGENTMAIL_INBOX_ADDRESS env var (an AgentMail
- * inbox id is its own address).
+ * inbox id is its own address). Used both for reply confirmations and for the
+ * daily reminder digest.
  */
-export async function sendReply(
+export async function sendEmail(
   to: string,
   subject: string,
   text: string,
