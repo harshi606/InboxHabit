@@ -34,8 +34,8 @@ export default function App() {
             No habits yet — add your first one above.
           </p>
         )}
-        {habits?.map((habit) => (
-          <HabitCard key={habit._id} habit={habit} userId={userId} />
+        {habits?.map((habit, i) => (
+          <HabitCard key={habit._id} habit={habit} userId={userId} index={i} />
         ))}
       </main>
     </div>
