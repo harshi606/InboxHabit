@@ -16,7 +16,7 @@
 - **AI models:** openai/gpt-oss-120b via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T21:48:00Z
+- **Last updated:** 2026-08-28T22:00:00Z
 
 ## Log
 
@@ -156,3 +156,13 @@ habit cards get a flame streak pill that heats up (cold/warm/hot), a
 done-today state, a best/logged meta row, and tips as a real list; activity
 feed gets source badges, mood chips and tabular times; the email-setup card
 gets a grey/green status dot. Fluid container, responsive under 560px.
+
+### 2026-08-28 - 29f907f
+Made it colourful and animated. Each habit gets a deterministic vivid
+gradient from its id (`src/lib/palette.ts`), applied to its side stripe,
+streak pill, Log button, hover glow and mood chips. Animations: staggered
+card entrance, an animated multi-colour header and page background, a
+flickering flame, a streak pill that glows/pulses faster as the streak
+climbs (cold/warm/hot/blazing), and a card pop + number bump + floating
+"+1" whenever a streak grows (from a click or an emailed log). Honours
+`prefers-reduced-motion`.
