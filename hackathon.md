@@ -16,7 +16,7 @@
 - **AI models:** openai/gpt-oss-120b via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T21:35:16Z
+- **Last updated:** 2026-08-28T21:48:00Z
 
 ## Log
 
@@ -132,7 +132,7 @@ job in the app. Verified by running `digests:sendDaily` directly: a due
 habit produced a "Your habits for today 🌱" email to the registered
 address; users with everything done get nothing.
 
-### 2026-08-28 - working tree
+### 2026-08-28 - abdaf52
 Replaced the inbound webhook with polling. AgentMail's `message.received`
 webhook fired for one test email and silently never fired for the next, so
 `convex/http.ts` (and the AgentMail webhook registration) were removed. A
@@ -144,4 +144,15 @@ the same sender->user + LLM->habit routing, record, and confirmation reply.
 `extractEmail` moved from `http.ts` into `inbound.ts`. Verified live: the
 cron picked up a real Gmail message ("Did gym for 1 hour"), matched the
 *gym* habit, logged an `email` entry, and replied "Re: habit update" —
-within a minute, no webhook involved.
+within a minute, no webhook involved. HTTP actions dropped from the Convex
+feature list.
+
+### 2026-08-28 - 96a3fef
+Confirmation replies now report the real post-log streak (`applyCompletion`
+returns it) instead of `currentStreak + 1`, which over-counted a same-day
+re-log (`41eb08f`). Then a full dashboard redesign (`src/index.css` +
+components): warm-paper / rich-dark theme tokens, Inter, gradient header;
+habit cards get a flame streak pill that heats up (cold/warm/hot), a
+done-today state, a best/logged meta row, and tips as a real list; activity
+feed gets source badges, mood chips and tabular times; the email-setup card
+gets a grey/green status dot. Fluid container, responsive under 560px.
