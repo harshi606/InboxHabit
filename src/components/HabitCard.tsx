@@ -13,6 +13,14 @@ function timeAgo(ms: number): string {
   return `${Math.round(diffHr / 24)}d ago`;
 }
 
+/** Split the stored "- tip\n- tip" string into individual lines. */
+function tipLines(tips: string): string[] {
+  return tips
+    .split("\n")
+    .map((t) => t.replace(/^[-*]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 export function HabitCard({ habit }: { habit: Doc<"habits">; userId: string }) {
   const entries = useQuery(api.entries.listForHabit, { habitId: habit._id });
   const logManual = useMutation(api.entries.logManual);
@@ -21,6 +29,9 @@ export function HabitCard({ habit }: { habit: Doc<"habits">; userId: string }) {
 
   const todayUtc = new Date().toISOString().slice(0, 10);
   const doneToday = habit.lastCompletedDate === todayUtc;
+  const streak = habit.currentStreak;
+  const heat = streak === 0 ? "cold" : streak < 3 ? "warm" : "hot";
+  const tips = tipLines(habit.tips);
 
   async function handleLog() {
     if (logging) return;
@@ -33,49 +44,69 @@ export function HabitCard({ habit }: { habit: Doc<"habits">; userId: string }) {
   }
 
   return (
-    <div className="habit-card">
+    <div className={`habit-card${doneToday ? " is-done" : ""}`}>
       <div className="habit-card-header">
-        <div>
-          <h3>{habit.name}</h3>
+        <div className="habit-title">
+          <h3>
+            {doneToday && <span className="done-check">✓</span>}
+            {habit.name}
+          </h3>
           <p className="habit-description">{habit.description}</p>
         </div>
-        <div className="streaks">
-          <div className="streak">
-            <span className="streak-number">{habit.currentStreak}</span>
-            <span className="streak-label">day streak</span>
-          </div>
-          <div className="streak streak-secondary">
-            <span className="streak-number">{habit.longestStreak}</span>
-            <span className="streak-label">best</span>
-          </div>
+        <div className={`streak ${heat}`} title={`Best: ${habit.longestStreak} days`}>
+          <span className="streak-flame">🔥</span>
+          <span className="streak-number">{streak}</span>
+          <span className="streak-unit">{streak === 1 ? "day" : "days"}</span>
         </div>
       </div>
 
-      {habit.tips && (
+      <div className="habit-meta">
+        <span>
+          Best <b>{habit.longestStreak}</b>
+        </span>
+        <span>
+          Logged <b>{entries?.length ?? 0}</b>×
+        </span>
+      </div>
+
+      {tips.length > 0 && (
         <details className="habit-tips">
           <summary>Tips</summary>
-          <pre>{habit.tips}</pre>
+          <ul className="tips-list">
+            {tips.map((tip, i) => (
+              <li key={i}>{tip}</li>
+            ))}
+          </ul>
         </details>
       )}
 
       <div className="habit-actions">
-        <button onClick={handleLog} disabled={logging || doneToday} className="log-button">
+        <button
+          onClick={handleLog}
+          disabled={logging || doneToday}
+          className={`log-button${doneToday ? " done" : ""}`}
+        >
           {doneToday ? "Done today ✓" : logging ? "Logging…" : "Log today"}
         </button>
-        <span className="log-hint">or email the inbox mentioning “{habit.name}”</span>
+        <span className="log-hint">or email “{habit.name}” to the inbox</span>
       </div>
 
       <button className="toggle-entries" onClick={() => setShowEntries((s) => !s)}>
-        {showEntries ? "Hide" : "Show"} activity ({entries?.length ?? 0})
+        {showEntries ? "Hide activity" : `Show activity (${entries?.length ?? 0})`}
       </button>
 
       {showEntries && (
         <ul className="entry-feed">
           {entries === undefined && <li className="entry-empty">Loading…</li>}
-          {entries?.length === 0 && <li className="entry-empty">No entries yet.</li>}
+          {entries?.length === 0 && (
+            <li className="entry-empty">No entries yet.</li>
+          )}
           {entries?.map((entry) => (
             <li key={entry._id} className="entry-item">
-              <span className="entry-source" title={entry.source}>
+              <span
+                className={`entry-source ${entry.source}`}
+                title={entry.source === "email" ? "Logged by email" : "Logged in app"}
+              >
                 {entry.source === "email" ? "✉" : "✓"}
               </span>
               <span className="entry-note">{entry.note}</span>

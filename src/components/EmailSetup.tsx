@@ -35,17 +35,21 @@ export function EmailSetup({ userId }: { userId: string }) {
 
   return (
     <div className="email-setup">
+      <div className="email-setup-head">
+        <span className={`dot${savedEmail ? " on" : ""}`} />
+        Log by email
+      </div>
+
       <div className="email-setup-line">
-        <span>Log any habit by emailing</span>
+        <span>Send updates to</span>
         <code>{inboxAddress ?? "…"}</code>
       </div>
 
       {showForm ? (
         <form className="email-setup-form" onSubmit={handleSave}>
           <input
-            type="text"
-            inputMode="email"
-            placeholder="you@example.com"
+            type="email"
+            placeholder="the address you'll send from"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             autoFocus
@@ -67,7 +71,7 @@ export function EmailSetup({ userId }: { userId: string }) {
         savedEmail !== null && (
           <div className="email-setup-line">
             <span>
-              Send from <strong>{savedEmail}</strong> and your streak updates live.
+              from <strong>{savedEmail}</strong>
             </span>
             <button
               type="button"

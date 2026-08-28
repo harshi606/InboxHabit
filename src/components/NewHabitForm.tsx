@@ -66,7 +66,7 @@ export function NewHabitForm({ userId }: { userId: string }) {
             />
           </label>
           <label>
-            Inspiration link (optional — Firecrawl + OpenAI turn it into tips)
+            Inspiration link (optional — we'll crawl it into a few tips)
             <input
               type="url"
               placeholder="https://…"
