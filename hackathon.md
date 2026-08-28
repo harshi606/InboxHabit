@@ -10,13 +10,13 @@
 - **Frontend:** Convex static hosting
 - **Convex deployment:** https://adventurous-swordfish-799.convex.cloud (dev)
 - **Components:** none
-- **Convex features:** schema, indexes, queries, mutations, actions, HTTP
-  actions, realtime queries, crons / scheduled functions
+- **Convex features:** schema, indexes, queries, mutations, actions, realtime
+  queries, crons / scheduled functions
 - **Auth:** none
 - **AI models:** openai/gpt-oss-120b via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T21:27:23Z
+- **Last updated:** 2026-08-28T21:35:16Z
 
 ## Log
 
@@ -119,7 +119,7 @@ a confirmation reply is sent from `inboxhabit@agentmail.to`, and both an
 unknown sender and an unrelated email from the registered address are
 accepted with 200 and no log.
 
-### 2026-08-28 - working tree
+### 2026-08-28 - 340f9cc
 Added a proactive daily reminder digest. A Convex cron (`convex/crons.ts`,
 13:00 UTC) runs `internal.digests.sendDaily` (`convex/digests.ts`): for
 every registered user it collects the habits not yet completed that day
@@ -131,3 +131,17 @@ digest and the inbound confirmation. First Convex component-free scheduled
 job in the app. Verified by running `digests:sendDaily` directly: a due
 habit produced a "Your habits for today 🌱" email to the registered
 address; users with everything done get nothing.
+
+### 2026-08-28 - working tree
+Replaced the inbound webhook with polling. AgentMail's `message.received`
+webhook fired for one test email and silently never fired for the next, so
+`convex/http.ts` (and the AgentMail webhook registration) were removed. A
+new 1-minute cron runs `internal.inbound.poll` (`convex/inbound.ts`):
+`listInboxMessages` fetches the last 20 messages from the shared inbox, and
+each non-sent one goes through `handleMessage` — `claim` (insert into the
+new `processedEmails` table, false if already there) gates the work, then
+the same sender->user + LLM->habit routing, record, and confirmation reply.
+`extractEmail` moved from `http.ts` into `inbound.ts`. Verified live: the
+cron picked up a real Gmail message ("Did gym for 1 hour"), matched the
+*gym* habit, logged an `email` entry, and replied "Re: habit update" —
+within a minute, no webhook involved.

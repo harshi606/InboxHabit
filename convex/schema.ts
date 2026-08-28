@@ -33,4 +33,9 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_email", ["email"]),
+
+  // Inbound emails already handled, so polling the shared inbox is idempotent.
+  processedEmails: defineTable({
+    messageId: v.string(),
+  }).index("by_message", ["messageId"]),
 });

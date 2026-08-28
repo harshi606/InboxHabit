@@ -17,7 +17,7 @@ Built for the Convex All Gas Hackathon on [Convex](https://convex.dev).
 - **Frontend:** Vite + React 19 + TypeScript, live-updating via Convex
   React hooks (no polling — data pushes to the browser).
 - **Backend:** Convex (`convex/`) — schema, queries/mutations/actions, and
-  an HTTP endpoint that receives AgentMail's inbound-email webhook.
+  crons that poll the inbox and send the daily digest.
 - **Auth:** none. Each browser gets a random id in `localStorage` that
   scopes its own habits — good enough for a hackathon demo, not for
   production.
@@ -59,33 +59,28 @@ Then run both the frontend and backend dev servers together:
 npm run dev
 ```
 
-## Wiring up the AgentMail webhook
+## Inbound email
 
-Once `npx convex dev` has printed your deployment's HTTP Actions URL
-(`https://<deployment>.convex.site`), add an **organization webhook** in
-AgentMail (event `message.received`) pointing at:
+There's nothing to wire up. A Convex cron polls the shared inbox once a
+minute (`convex/inbound.ts`), and for each new message: resolves the sender
+to a registered user, asks the LLM which of their habits it's about and
+whether it's done, records the completion, and sends a confirmation reply.
+Each message id is stored in `processedEmails` so it's handled once.
 
-```
-https://<deployment>.convex.site/agentmail/webhook
-```
-
-The webhook identifies the user by the sender address (registered in the
-dashboard) and asks the LLM which habit the email is about. `convex/http.ts`
-parses the payload defensively (several possible field names) — check the
-Convex function logs if a real email doesn't get picked up and adjust the
-field lookups there.
+(AgentMail also offers real-time webhooks, but delivery is unreliable on the
+free tier, so polling is the primary path.)
 
 ## Project layout
 
 ```
 convex/
-  schema.ts           habits, entries, userSettings tables
+  schema.ts           habits, entries, userSettings, processedEmails tables
   habits.ts            create habit (Firecrawl + LLM), list
   entries.ts           log a completion, streak calculation, live feed
   userSettings.ts      register/look up a user's email address
   settings.ts          expose the shared inbox address to the frontend
-  http.ts              AgentMail inbound-webhook handler (sender -> user, LLM -> habit)
-  crons.ts             schedule the daily digest
+  inbound.ts           poll the inbox, route each email (sender -> user, LLM -> habit)
+  crons.ts             schedule the inbox poll + the daily digest
   digests.ts           build + send each user's daily reminder digest
   admin.ts             internal wipe helper for resetting a dev deployment
   lib/

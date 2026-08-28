@@ -7,7 +7,12 @@ import { internalMutation } from "./_generated/server";
 export const wipe = internalMutation({
   args: {},
   handler: async (ctx) => {
-    for (const table of ["entries", "habits", "userSettings"] as const) {
+    for (const table of [
+      "entries",
+      "habits",
+      "userSettings",
+      "processedEmails",
+    ] as const) {
       for (const doc of await ctx.db.query(table).collect()) {
         await ctx.db.delete(doc._id);
       }

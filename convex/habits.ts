@@ -17,7 +17,7 @@ export const listForUser = query({
   },
 });
 
-/** Same list, for the inbound-email webhook to match against. */
+/** Same list, for the inbound-email poller to match against. */
 export const forUser = internalQuery({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
@@ -50,8 +50,8 @@ export const insert = internalMutation({
  *  1. (optional) Firecrawl-scrape a source URL for inspiration.
  *  2. An LLM (Groq) turns that (or the habit name alone) into a few short tips.
  * Tips are best-effort: a failure there doesn't block habit creation. Logging
- * by email works through the app's one shared inbox (see convex/http.ts), so
- * no per-habit inbox is provisioned.
+ * by email works through the app's one shared inbox (see convex/inbound.ts),
+ * so no per-habit inbox is provisioned.
  */
 export const create = action({
   args: {
