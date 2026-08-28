@@ -7,14 +7,14 @@
 - **Live app:** not deployed
 - **Repo:** https://github.com/harshi606/InboxHabit
 - **Frontend:** Convex static hosting
-- **Convex deployment:** not deployed
+- **Convex deployment:** https://adventurous-swordfish-799.convex.cloud (dev)
 - **Components:** none
 - **Convex features:** schema, indexes, queries, mutations, actions, HTTP
   actions, realtime queries
 - **Auth:** none
 - **AI models:** gpt-4o-mini (default, overridable via `OPENAI_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T18:43:42Z
+- **Last updated:** 2026-08-28T19:42:09Z
 
 ## Log
 
@@ -35,3 +35,17 @@ dashboard shows streaks, tips, the habit's inbox address, and a real-time
 activity feed (`src/App.tsx`, `src/components/HabitCard.tsx`,
 `src/components/NewHabitForm.tsx`). Not yet linked to a live Convex
 deployment.
+
+### 2026-08-28 - 0b2882b
+Linked the project to its first live Convex deployment
+(`adventurous-swordfish-799`, dev) and pushed the schema and all functions;
+the four table indexes and the `/agentmail/webhook` HTTP action are live.
+Committed the generated `convex/_generated/` client. Fixed a build break:
+`convex/_generated/api.d.ts` pulls the backend modules (which read
+`process.env`) into the frontend's type graph, so `npm run build` failed
+with "Cannot find name 'process'" until `"node"` was added to
+`tsconfig.app.json` types. Set the real page `<title>` in `index.html`.
+Verified against the deployment: creating a habit and logging a completion
+advance `currentStreak` and append to the live activity feed. API keys
+(OpenAI, Firecrawl, AgentMail) not yet set, so tip generation and inbox
+provisioning still fall back to their warnings.
