@@ -15,7 +15,7 @@
 - **AI models:** llama-3.3-70b-versatile via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T20:17:54Z
+- **Last updated:** 2026-08-28T20:22:42Z
 
 ## Log
 
@@ -69,13 +69,29 @@ endpoint currently runs unauthenticated (`AGENTMAIL_WEBHOOK_SECRET` unset);
 AgentMail signs with Svix, which the shared-secret check in `http.ts`
 doesn't yet verify.
 
-### 2026-08-28 - working tree
+### 2026-08-28 - 8e26f2b
 Switched the LLM provider from OpenAI to Groq, whose free API key needs no
 billing (both OpenAI keys available for this project had an exhausted
 credit balance). `convex/lib/openai.ts` became `convex/lib/llm.ts` and now
 calls Groq's OpenAI-compatible chat-completions endpoint
-(`llama-3.3-70b-versatile`, key `GROQ_API_KEY`, model overridable via
+(`openai/gpt-oss-120b`, key `GROQ_API_KEY`, model overridable via
 `GROQ_MODEL`); the request/response shape and the four exported helpers
 (`summarizeTips`, `generateGenericTips`, `extractHabitUpdate`,
 `generateConfirmationReply`) are unchanged, so `habits.ts` and `http.ts`
 only needed their import path updated. README and this log updated to match.
+
+With all keys set, the app is verified working end to end against the live
+deployment:
+
+- **Create habit** — Firecrawl scrapes the inspiration URL, Groq turns it
+  into tips grounded in that page, AgentMail provisions a per-habit inbox.
+- **Log today** (manual) — streak and the live activity feed update.
+- **Log by email** — a `message.received` webhook from AgentMail is parsed
+  by Groq into completed/note/mood, the completion is recorded (streak
+  advances, feed shows `source: email` with the mood and subject), and a
+  Groq-written confirmation reply is sent back from the habit's inbox.
+
+Known limitations: AgentMail free tier caps at 3 inboxes; the webhook
+endpoint is unauthenticated (`AGENTMAIL_WEBHOOK_SECRET` unset, and the
+shared-secret check in `http.ts` doesn't implement AgentMail's Svix
+signatures); the frontend is not yet published.
