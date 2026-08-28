@@ -37,13 +37,20 @@ export interface CreatedInbox {
  * logging as a fallback.
  */
 export async function createInbox(habitName: string): Promise<CreatedInbox | null> {
+  // AgentMail rejects display names containing punctuation like ":" with a
+  // validation_error, so strip everything except letters, numbers, spaces and
+  // hyphens before sending.
+  const displayName = `InboxHabit ${habitName}`
+    .replace(/[^\p{L}\p{N} -]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60);
+
   try {
     const response = await fetch(`${AGENTMAIL_BASE_URL}/inboxes`, {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify({
-        display_name: `InboxHabit: ${habitName}`.slice(0, 60),
-      }),
+      body: JSON.stringify({ display_name: displayName }),
     });
 
     if (!response.ok) {
