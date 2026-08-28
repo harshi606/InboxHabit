@@ -1,11 +1,17 @@
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-const DEFAULT_MODEL = "gpt-4o-mini";
+// LLM helpers for InboxHabit: habit tips, inbound-email parsing, and
+// confirmation replies. Uses Groq's OpenAI-compatible chat-completions API
+// (https://console.groq.com) so it runs on a free API key with no billing.
+// Swap GROQ_API_URL / DEFAULT_MODEL and the GROQ_API_KEY env var to move to
+// another OpenAI-compatible provider.
+
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 
 function requireApiKey(): string {
-  const key = process.env.OPENAI_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
     throw new Error(
-      "OPENAI_API_KEY is not set. Run `npx convex env set OPENAI_API_KEY <your-key>`.",
+      "GROQ_API_KEY is not set. Run `npx convex env set GROQ_API_KEY <your-key>`.",
     );
   }
   return key;
@@ -16,9 +22,9 @@ async function chatJson(
   userPrompt: string,
 ): Promise<Record<string, unknown>> {
   const apiKey = requireApiKey();
-  const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
+  const model = process.env.GROQ_MODEL || DEFAULT_MODEL;
 
-  const response = await fetch(OPENAI_API_URL, {
+  const response = await fetch(GROQ_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -37,19 +43,19 @@ async function chatJson(
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`OpenAI request failed (${response.status}): ${body}`);
+    throw new Error(`LLM request failed (${response.status}): ${body}`);
   }
 
   const data = await response.json();
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== "string") {
-    throw new Error("OpenAI response did not contain message content.");
+    throw new Error("LLM response did not contain message content.");
   }
 
   try {
     return JSON.parse(content);
   } catch {
-    throw new Error(`OpenAI response was not valid JSON: ${content}`);
+    throw new Error(`LLM response was not valid JSON: ${content}`);
   }
 }
 

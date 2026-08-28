@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { extractHabitUpdate, generateConfirmationReply } from "./lib/openai";
+import { extractHabitUpdate, generateConfirmationReply } from "./lib/llm";
 import { sendReply } from "./lib/agentmail";
 
 const http = httpRouter();

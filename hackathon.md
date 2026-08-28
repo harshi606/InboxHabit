@@ -12,9 +12,10 @@
 - **Convex features:** schema, indexes, queries, mutations, actions, HTTP
   actions, realtime queries
 - **Auth:** none
-- **AI models:** gpt-4o-mini (default, overridable via `OPENAI_MODEL`)
+- **AI models:** llama-3.3-70b-versatile via Groq (default, overridable via
+  `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T20:09:31Z
+- **Last updated:** 2026-08-28T20:17:54Z
 
 ## Log
 
@@ -67,3 +68,14 @@ fall back to their warnings/500s until the account is funded. The webhook
 endpoint currently runs unauthenticated (`AGENTMAIL_WEBHOOK_SECRET` unset);
 AgentMail signs with Svix, which the shared-secret check in `http.ts`
 doesn't yet verify.
+
+### 2026-08-28 - working tree
+Switched the LLM provider from OpenAI to Groq, whose free API key needs no
+billing (both OpenAI keys available for this project had an exhausted
+credit balance). `convex/lib/openai.ts` became `convex/lib/llm.ts` and now
+calls Groq's OpenAI-compatible chat-completions endpoint
+(`llama-3.3-70b-versatile`, key `GROQ_API_KEY`, model overridable via
+`GROQ_MODEL`); the request/response shape and the four exported helpers
+(`summarizeTips`, `generateGenericTips`, `extractHabitUpdate`,
+`generateConfirmationReply`) are unchanged, so `habits.ts` and `http.ts`
+only needed their import path updated. README and this log updated to match.

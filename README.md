@@ -2,10 +2,11 @@
 
 A real-time habit tracker you can update by email. Every habit gets its own
 AI-managed inbox (via [AgentMail](https://agentmail.to)) — email it to log
-progress, and [OpenAI](https://openai.com) reads the email, decides whether
-you completed the habit, and updates your streak live. Creating a habit can
-optionally crawl an inspiration URL with [Firecrawl](https://firecrawl.dev)
-and turn it into a few short tips via OpenAI.
+progress, and an LLM (via [Groq](https://groq.com)) reads the email, decides
+whether you completed the habit, and updates your streak live. Creating a
+habit can optionally crawl an inspiration URL with
+[Firecrawl](https://firecrawl.dev) and turn it into a few short tips via the
+same LLM.
 
 Built for the Convex All Gas Hackathon on [Convex](https://convex.dev).
 
@@ -38,9 +39,9 @@ running, or stop it with Ctrl+C once it says the deployment is ready.
 Then set the three API keys it needs (never commit these):
 
 ```bash
-npx convex env set OPENAI_API_KEY sk-...
+npx convex env set GROQ_API_KEY gsk_...          # free at console.groq.com
 npx convex env set FIRECRAWL_API_KEY fc-...
-npx convex env set AGENTMAIL_API_KEY am-...
+npx convex env set AGENTMAIL_API_KEY am_us_...   # organization-scoped key
 ```
 
 Then run both the frontend and backend dev servers together:
@@ -70,11 +71,11 @@ and adjust the field lookups there to match what's actually sent.
 ```
 convex/
   schema.ts          habits + entries tables
-  habits.ts           create habit (Firecrawl + OpenAI + AgentMail), list
+  habits.ts           create habit (Firecrawl + LLM + AgentMail), list
   entries.ts           log a completion, streak calculation, live feed
   http.ts              AgentMail inbound-webhook handler
   lib/
-    openai.ts           chat completion helpers (tips, email parsing, replies)
+    llm.ts              chat completion helpers (tips, email parsing, replies)
     firecrawl.ts         scrape a URL to markdown
     agentmail.ts         create an inbox, send a reply
 src/

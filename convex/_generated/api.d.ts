@@ -14,7 +14,7 @@ import type * as habits from "../habits.js";
 import type * as http from "../http.js";
 import type * as lib_agentmail from "../lib/agentmail.js";
 import type * as lib_firecrawl from "../lib/firecrawl.js";
-import type * as lib_openai from "../lib/openai.js";
+import type * as lib_llm from "../lib/llm.js";
 
 import type {
   ApiFromModules,
@@ -29,7 +29,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/agentmail": typeof lib_agentmail;
   "lib/firecrawl": typeof lib_firecrawl;
-  "lib/openai": typeof lib_openai;
+  "lib/llm": typeof lib_llm;
 }>;
 
 /**

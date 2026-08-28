@@ -3,7 +3,7 @@ import { action, internalMutation, internalQuery, query } from "./_generated/ser
 import { internal } from "./_generated/api";
 import { scrapeToMarkdown } from "./lib/firecrawl";
 import { createInbox } from "./lib/agentmail";
-import { generateGenericTips, summarizeTips } from "./lib/openai";
+import { generateGenericTips, summarizeTips } from "./lib/llm";
 
 /** Live list of a user's habits, newest first. */
 export const listForUser = query({
@@ -50,7 +50,7 @@ export const insert = internalMutation({
 /**
  * Create a habit end-to-end:
  *  1. (optional) Firecrawl-scrape a source URL for inspiration.
- *  2. OpenAI turns that (or the habit name alone) into a few short tips.
+ *  2. An LLM (Groq) turns that (or the habit name alone) into a few short tips.
  *  3. AgentMail provisions a dedicated inbox so the habit can be logged by email.
  * Each external call is best-effort: a failure in one doesn't block the others.
  */
