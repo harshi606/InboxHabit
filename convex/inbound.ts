@@ -70,16 +70,19 @@ export const handleMessage = internalAction({
       : undefined;
     if (!habit) return;
 
-    await ctx.runMutation(internal.entries.recordFromEmail, {
-      habitId: habit._id,
-      note: match.note,
-      mood: match.mood,
-      emailSubject: args.subject,
-    });
+    const { currentStreak } = await ctx.runMutation(
+      internal.entries.recordFromEmail,
+      {
+        habitId: habit._id,
+        note: match.note,
+        mood: match.mood,
+        emailSubject: args.subject,
+      },
+    );
 
     const reply = await generateConfirmationReply(
       habit.name,
-      habit.currentStreak + 1,
+      currentStreak,
       match.note,
     ).catch(() => `Logged! Keep it up.`);
     await sendEmail(fromEmail, `Re: ${args.subject}`, reply);

@@ -14,7 +14,7 @@ async function applyCompletion(
     emailSubject?: string;
     completedAt: number;
   },
-): Promise<Id<"entries">> {
+): Promise<{ entryId: Id<"entries">; currentStreak: number }> {
   const today = utcDateString(args.completedAt);
 
   let currentStreak = habit.currentStreak;
@@ -36,7 +36,7 @@ async function applyCompletion(
     lastCompletedDate: today,
   });
 
-  return await ctx.db.insert("entries", {
+  const entryId = await ctx.db.insert("entries", {
     habitId: habit._id,
     userId: args.userId,
     completedAt: args.completedAt,
@@ -45,6 +45,7 @@ async function applyCompletion(
     source: args.source,
     emailSubject: args.emailSubject,
   });
+  return { entryId, currentStreak };
 }
 
 /** Manually mark a habit done today (the quick "Log today" button). */
