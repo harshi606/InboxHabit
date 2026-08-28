@@ -14,7 +14,7 @@
 - **Auth:** none
 - **AI models:** gpt-4o-mini (default, overridable via `OPENAI_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T19:42:09Z
+- **Last updated:** 2026-08-28T20:09:31Z
 
 ## Log
 
@@ -49,3 +49,21 @@ Verified against the deployment: creating a habit and logging a completion
 advance `currentStreak` and append to the live activity feed. API keys
 (OpenAI, Firecrawl, AgentMail) not yet set, so tip generation and inbox
 provisioning still fall back to their warnings.
+
+### 2026-08-28 - 87b5665
+Wired the three integrations against the live deployment. Firecrawl scraping
+works. AgentMail needed an organization-scoped key (an inbox-scoped one
+can't create inboxes); with it, `habits.create` now provisions a real
+per-habit inbox. Fixed `convex/lib/agentmail.ts`: AgentMail rejects a
+`display_name` containing ":", so `InboxHabit: <name>` always 400'd — the
+name is now built from letters, numbers, spaces and hyphens only.
+Registered an organization-wide AgentMail webhook (event `message.received`)
+pointing at `https://adventurous-swordfish-799.convex.site/agentmail/webhook`;
+a simulated inbound payload confirmed the handler parses the recipient,
+looks up the habit, and reaches the OpenAI extraction step. OpenAI is the
+remaining blocker: both keys provided have an exhausted credit balance, so
+tips, inbound-email parsing, and confirmation replies error at the API and
+fall back to their warnings/500s until the account is funded. The webhook
+endpoint currently runs unauthenticated (`AGENTMAIL_WEBHOOK_SECRET` unset);
+AgentMail signs with Svix, which the shared-secret check in `http.ts`
+doesn't yet verify.
