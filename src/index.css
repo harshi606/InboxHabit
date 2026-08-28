@@ -262,20 +262,49 @@ button:disabled {
   background: var(--accent);
 }
 
-.inbox-address {
-  font-family: var(--mono);
+.log-hint {
   font-size: 12px;
-  color: var(--accent);
-  text-decoration: none;
-  background: var(--accent-bg);
-  padding: 6px 10px;
-  border-radius: 6px;
+  color: var(--text);
 }
 
-.inbox-address-missing {
-  color: var(--danger);
+/* --- email setup --- */
+
+.email-setup {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.email-setup-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.email-setup-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.email-setup-form input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.link-button {
   background: transparent;
-  font-family: var(--sans);
+  color: var(--accent);
+  font-size: 13px;
+  padding: 4px 2px;
 }
 
 .toggle-entries {

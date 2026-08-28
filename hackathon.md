@@ -2,8 +2,8 @@
 
 - **Project:** InboxHabit
 - **Event:** Convex All Gas Hackathon
-- **What it does:** Real-time habit tracker: log progress by emailing a
-  habit's dedicated AI inbox, and watch the streak update live.
+- **What it does:** Real-time habit tracker: log progress by emailing the
+  app's shared AI inbox, and watch the streak update live.
 - **Live app:** not deployed
 - **Repo:** https://github.com/harshi606/InboxHabit
 - **Frontend:** Convex static hosting
@@ -12,10 +12,10 @@
 - **Convex features:** schema, indexes, queries, mutations, actions, HTTP
   actions, realtime queries
 - **Auth:** none
-- **AI models:** llama-3.3-70b-versatile via Groq (default, overridable via
+- **AI models:** openai/gpt-oss-120b via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T20:22:42Z
+- **Last updated:** 2026-08-28T20:34:32Z
 
 ## Log
 
@@ -95,3 +95,25 @@ Known limitations: AgentMail free tier caps at 3 inboxes; the webhook
 endpoint is unauthenticated (`AGENTMAIL_WEBHOOK_SECRET` unset, and the
 shared-secret check in `http.ts` doesn't implement AgentMail's Svix
 signatures); the frontend is not yet published.
+
+### 2026-08-28 - working tree
+Replaced per-habit AgentMail inboxes with a single shared app inbox
+(`AGENTMAIL_INBOX_ADDRESS`), because the free tier caps at 3 inboxes. New
+`userSettings` table (`convex/userSettings.ts`) stores each anonymous user's
+email; `convex/settings.ts` exposes the shared inbox address to the
+frontend; a new `EmailSetup` component (`src/components/EmailSetup.tsx`)
+lets the user register their address. The inbound webhook
+(`convex/http.ts`) now resolves the sender address to a user, then asks the
+LLM (`matchHabitUpdate` in `convex/lib/llm.ts`, replacing
+`extractHabitUpdate`) which of that user's habits the email is about.
+`convex/lib/agentmail.ts` lost `createInbox`; `sendReply` now sends from the
+shared inbox. `habits` schema dropped `inboxAddress` / `inboxId` and the
+`by_inboxAddress` index. Added `convex/admin.ts` (`wipe` internal mutation)
+to reset a dev deployment.
+
+Verified end to end: user registers `ppvh2018@gmail.com`, creates "Morning
+run" and "Read 20 pages"; an email "went for a 2 mile run this morning"
+from that address logs *Morning run* only (streak -> 1, mood "energized"),
+a confirmation reply is sent from `inboxhabit@agentmail.to`, and both an
+unknown sender and an unrelated email from the registered address are
+accepted with 200 and no log.

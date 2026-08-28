@@ -62,15 +62,7 @@ export function HabitCard({ habit }: { habit: Doc<"habits">; userId: string }) {
         <button onClick={handleLog} disabled={logging || doneToday} className="log-button">
           {doneToday ? "Done today ✓" : logging ? "Logging…" : "Log today"}
         </button>
-        {habit.inboxAddress ? (
-          <a className="inbox-address" href={`mailto:${habit.inboxAddress}`}>
-            ✉ {habit.inboxAddress}
-          </a>
-        ) : (
-          <span className="inbox-address inbox-address-missing">
-            Email logging unavailable (inbox creation failed)
-          </span>
-        )}
+        <span className="log-hint">or email the inbox mentioning “{habit.name}”</span>
       </div>
 
       <button className="toggle-entries" onClick={() => setShowEntries((s) => !s)}>

@@ -95,34 +95,46 @@ export async function generateGenericTips(habitName: string): Promise<string> {
     .join("\n");
 }
 
-export interface EmailExtraction {
+export interface HabitMatch {
+  /** id of the matched habit, or null if none of the user's habits clearly fit. */
+  habitId: string | null;
   completed: boolean;
   note: string;
   mood?: string;
 }
 
 /**
- * Parse an inbound email into a structured habit-completion event.
- * habitName/habitDescription give the model context on what "done" means.
+ * Given a user's habits and an inbound email, decide which habit the email is
+ * reporting progress on and whether it was completed.
  */
-export async function extractHabitUpdate(
-  habitName: string,
-  habitDescription: string,
+export async function matchHabitUpdate(
+  habits: { id: string; name: string; description: string }[],
   emailSubject: string,
   emailBody: string,
-): Promise<EmailExtraction> {
+): Promise<HabitMatch> {
+  const list = habits
+    .map((h) => `- id=${h.id} | ${h.name} — ${h.description}`)
+    .join("\n");
   const result = await chatJson(
-    "You read a short email someone sent to their own habit-tracking inbox. " +
-      "Decide whether they are reporting that they completed the habit today. " +
-      "Reply as JSON: {\"completed\": boolean, \"note\": string, \"mood\": string}. " +
-      "\"note\" is a short (<=140 char) factual summary of what they wrote, in " +
-      "their own words where possible. \"mood\" is one lowercase word if a mood " +
-      "is expressed (e.g. \"great\", \"tired\", \"proud\"), otherwise omit it. " +
-      "If the email is unrelated or ambiguous, set completed to false.",
-    `Habit: ${habitName}\nWhat "done" means: ${habitDescription}\n\n` +
+    "A user emailed their habit-tracking inbox. Using the list of their " +
+      "habits, decide which single habit this email is reporting progress on " +
+      "and whether they completed it. Reply as JSON: " +
+      "{\"habitId\": string|null, \"completed\": boolean, \"note\": string, \"mood\": string}. " +
+      "\"habitId\" must be exactly one of the ids listed, or null if none " +
+      "clearly matches. \"note\" is a short (<=140 char) factual summary in " +
+      "their own words. \"mood\" is one lowercase word if a mood is expressed " +
+      "(e.g. \"great\", \"tired\", \"proud\"), otherwise omit it. If the email " +
+      "is unrelated or ambiguous, set habitId to null and completed to false.",
+    `The user's habits:\n${list}\n\n` +
       `Email subject: ${emailSubject}\nEmail body:\n${emailBody.slice(0, 4000)}`,
   );
+  const habitId =
+    typeof result.habitId === "string" &&
+    habits.some((h) => h.id === result.habitId)
+      ? result.habitId
+      : null;
   return {
+    habitId,
     completed: result.completed === true,
     note: typeof result.note === "string" ? result.note.slice(0, 140) : "",
     mood: typeof result.mood === "string" ? result.mood : undefined,

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { getOrCreateUserId } from "./lib/userId";
+import { EmailSetup } from "./components/EmailSetup";
 import { NewHabitForm } from "./components/NewHabitForm";
 import { HabitCard } from "./components/HabitCard";
 
@@ -14,11 +15,12 @@ export default function App() {
       <header className="app-header">
         <h1>InboxHabit</h1>
         <p className="tagline">
-          Build habits by email. Each habit gets its own AI inbox — log progress
-          by sending a message, watch your streak update live.
+          Build habits by email. Send a message to the shared inbox to log
+          progress on any habit — watch your streak update live.
         </p>
       </header>
 
+      <EmailSetup userId={userId} />
       <NewHabitForm userId={userId} />
 
       <main className="habit-list">

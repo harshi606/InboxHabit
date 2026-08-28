@@ -7,15 +7,11 @@ export default defineSchema({
     name: v.string(),
     description: v.string(),
     tips: v.string(),
-    inboxAddress: v.optional(v.string()),
-    inboxId: v.optional(v.string()),
     currentStreak: v.number(),
     longestStreak: v.number(),
     lastCompletedDate: v.optional(v.string()), // "YYYY-MM-DD" in UTC
     createdAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_inboxAddress", ["inboxAddress"]),
+  }).index("by_user", ["userId"]),
 
   entries: defineTable({
     habitId: v.id("habits"),
@@ -28,4 +24,13 @@ export default defineSchema({
   })
     .index("by_habit", ["habitId"])
     .index("by_user", ["userId"]),
+
+  // One row per anonymous browser user. Their email address is how an inbound
+  // message to the shared habit inbox is tied back to their habits.
+  userSettings: defineTable({
+    userId: v.string(),
+    email: v.string(), // stored lowercased
+  })
+    .index("by_user", ["userId"])
+    .index("by_email", ["email"]),
 });

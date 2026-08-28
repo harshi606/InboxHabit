@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { extractHabitUpdate, generateConfirmationReply } from "./lib/llm";
+import { matchHabitUpdate, generateConfirmationReply } from "./lib/llm";
 import { sendReply } from "./lib/agentmail";
 
 const http = httpRouter();
@@ -17,15 +17,25 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+/** Pull the bare address out of a "Display Name <addr@x.com>" string. */
+function extractEmail(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const angle = value.match(/<([^>]+)>/);
+  const candidate = (angle ? angle[1] : value).trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate) ? candidate : undefined;
+}
+
 /**
- * Receives inbound-email events from AgentMail. Configure this URL
- * (https://<your-deployment>.convex.site/agentmail/webhook) as the webhook
- * for each habit's inbox in the AgentMail dashboard, event "message.received".
+ * Receives inbound-email events from AgentMail for the app's shared inbox.
+ * Configure this URL as an organization webhook in AgentMail, event
+ * "message.received".
  *
- * The exact payload shape is read defensively (several possible field names)
- * since this sandbox could not reach agentmail.to to confirm the current
- * schema — check console logs if a real email doesn't get picked up, and
- * adjust the field lookups below to match what AgentMail actually sends.
+ * Routing: the sender address identifies the user (they register it in the
+ * dashboard), then an LLM matches the email to one of that user's habits.
+ *
+ * The payload shape is read defensively (several possible field names) since
+ * it was written without live access to AgentMail's docs — check console logs
+ * if a real email isn't picked up and adjust the field lookups below.
  */
 http.route({
   path: "/agentmail/webhook",
@@ -47,62 +57,62 @@ http.route({
     }
 
     const message = payload.message ?? payload;
-    const toAddress = firstString(
-      message.to,
-      Array.isArray(message.to) ? message.to[0] : undefined,
-      message.recipient,
-      payload.inbox?.address,
-      payload.address,
-    );
-    const fromAddress = firstString(
-      message.from,
-      Array.isArray(message.from) ? message.from[0] : undefined,
-      message.sender,
+    const fromAddress = extractEmail(
+      firstString(
+        message.from,
+        Array.isArray(message.from) ? message.from[0] : undefined,
+        message.sender,
+      ),
     );
     const subject = firstString(message.subject) ?? "(no subject)";
     const rawText = firstString(message.text, message.body_text, message.snippet);
     const rawHtml = firstString(message.html, message.body_html);
     const body = rawText ?? (rawHtml ? stripHtml(rawHtml) : "");
 
-    if (!toAddress) {
-      console.error("AgentMail webhook: could not determine recipient inbox address", payload);
-      return new Response("Missing recipient address", { status: 400 });
+    if (!fromAddress) {
+      console.error("AgentMail webhook: could not determine sender address", payload);
+      return new Response("Missing sender address", { status: 400 });
     }
 
-    const habit = await ctx.runQuery(internal.habits.getByInboxAddress, {
-      address: toAddress,
+    const userId = await ctx.runQuery(internal.userSettings.userIdForEmail, {
+      email: fromAddress,
     });
-    if (!habit) {
-      console.error(`AgentMail webhook: no habit for inbox ${toAddress}`);
-      return new Response("Unknown inbox", { status: 404 });
+    if (!userId) {
+      console.error(`AgentMail webhook: no registered user for sender ${fromAddress}`);
+      return new Response("OK (unknown sender)", { status: 200 });
     }
 
-    const extraction = await extractHabitUpdate(
-      habit.name,
-      habit.description,
+    const habits = await ctx.runQuery(internal.habits.forUser, { userId });
+    if (habits.length === 0) {
+      return new Response("OK (sender has no habits)", { status: 200 });
+    }
+
+    const match = await matchHabitUpdate(
+      habits.map((h) => ({ id: h._id, name: h.name, description: h.description })),
       subject,
       body,
     );
 
-    if (!extraction.completed) {
-      return new Response("OK (not logged: not a completion)", { status: 200 });
+    const habit = match.completed
+      ? habits.find((h) => h._id === match.habitId)
+      : undefined;
+    if (!habit) {
+      return new Response("OK (not logged: no matching completion)", { status: 200 });
     }
 
     await ctx.runMutation(internal.entries.recordFromEmail, {
       habitId: habit._id,
-      note: extraction.note,
-      mood: extraction.mood,
+      note: match.note,
+      mood: match.mood,
       emailSubject: subject,
     });
 
-    if (habit.inboxId && fromAddress) {
-      const reply = await generateConfirmationReply(
-        habit.name,
-        habit.currentStreak + 1,
-        extraction.note,
-      ).catch(() => `Logged! Keep it up.`);
-      await sendReply(habit.inboxId, fromAddress, `Re: ${subject}`, reply);
-    }
+    const reply = await generateConfirmationReply(
+      habit.name,
+      habit.currentStreak + 1,
+      match.note,
+    ).catch(() => `Logged! Keep it up.`);
+    await sendReply(fromAddress, `Re: ${subject}`, reply);
 
     return new Response("OK", { status: 200 });
   }),

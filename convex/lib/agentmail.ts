@@ -1,11 +1,10 @@
-// AgentMail (https://agentmail.to) gives each habit its own AI-managed email
-// inbox. Users log progress by emailing that inbox; AgentMail delivers new
-// messages to our webhook (see convex/http.ts).
+// AgentMail (https://agentmail.to) hosts one shared inbox for the whole app.
+// Users log progress by emailing that inbox from the address they registered;
+// AgentMail delivers new messages to our webhook (see convex/http.ts), which
+// figures out the user (by sender) and the habit (by an LLM match).
 //
-// NOTE: this targets AgentMail's v0 REST API from training-data knowledge.
-// This sandbox could not reach agentmail.to to double-check the current
-// docs — verify field names against https://docs.agentmail.to if inbox
-// creation or sending fails once a real API key is set.
+// NOTE: this targets AgentMail's v0 REST API. Verify field names against
+// https://docs.agentmail.to if sending fails once a real API key is set.
 
 const AGENTMAIL_BASE_URL = "https://api.agentmail.to/v0";
 
@@ -26,62 +25,24 @@ function authHeaders(): Record<string, string> {
   };
 }
 
-export interface CreatedInbox {
-  inboxId: string;
-  address: string;
-}
-
 /**
- * Create a dedicated inbox for a habit. Returns null (rather than throwing)
- * if inbox creation fails, so a habit can still be created without email
- * logging as a fallback.
+ * Send a plain-text reply from the shared inbox. Best-effort; never throws.
+ * The inbox is identified by the AGENTMAIL_INBOX_ADDRESS env var (an AgentMail
+ * inbox id is its own address).
  */
-export async function createInbox(habitName: string): Promise<CreatedInbox | null> {
-  // AgentMail rejects display names containing punctuation like ":" with a
-  // validation_error, so strip everything except letters, numbers, spaces and
-  // hyphens before sending.
-  const displayName = `InboxHabit ${habitName}`
-    .replace(/[^\p{L}\p{N} -]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 60);
-
-  try {
-    const response = await fetch(`${AGENTMAIL_BASE_URL}/inboxes`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({ display_name: displayName }),
-    });
-
-    if (!response.ok) {
-      console.error(`AgentMail create inbox failed (${response.status})`);
-      return null;
-    }
-
-    const data = await response.json();
-    const inboxId = data?.inbox_id ?? data?.id;
-    const address = data?.address ?? data?.email;
-    if (typeof inboxId !== "string" || typeof address !== "string") {
-      console.error("AgentMail create inbox response missing inbox_id/address");
-      return null;
-    }
-    return { inboxId, address };
-  } catch (err) {
-    console.error("AgentMail create inbox threw", err);
-    return null;
-  }
-}
-
-/** Send a plain-text reply from a habit's inbox. Best-effort; never throws. */
 export async function sendReply(
-  inboxId: string,
   to: string,
   subject: string,
   text: string,
 ): Promise<void> {
+  const inbox = process.env.AGENTMAIL_INBOX_ADDRESS;
+  if (!inbox) {
+    console.error("AGENTMAIL_INBOX_ADDRESS is not set; cannot send reply");
+    return;
+  }
   try {
     const response = await fetch(
-      `${AGENTMAIL_BASE_URL}/inboxes/${encodeURIComponent(inboxId)}/messages/send`,
+      `${AGENTMAIL_BASE_URL}/inboxes/${encodeURIComponent(inbox)}/messages/send`,
       {
         method: "POST",
         headers: authHeaders(),
