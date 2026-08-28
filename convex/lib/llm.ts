@@ -5,7 +5,9 @@
 // another OpenAI-compatible provider.
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+// A current Groq-hosted model that supports JSON-object response format.
+// Run `curl https://api.groq.com/openai/v1/models` for the live catalog.
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 function requireApiKey(): string {
   const key = process.env.GROQ_API_KEY;
