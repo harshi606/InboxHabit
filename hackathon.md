@@ -9,14 +9,14 @@
 - **Repo:** https://github.com/harshi606/InboxHabit
 - **Frontend:** Convex static hosting
 - **Convex deployment:** https://adventurous-swordfish-799.convex.cloud (dev)
-- **Components:** none
+- **Components:** @convex-dev/auth
 - **Convex features:** schema, indexes, queries, mutations, actions, realtime
-  queries, crons / scheduled functions
-- **Auth:** none
+  queries, crons / scheduled functions, HTTP actions (auth routes)
+- **Auth:** Convex Auth (email + password)
 - **AI models:** openai/gpt-oss-120b via Groq (default, overridable via
   `GROQ_MODEL`)
 - **Started:** 2026-08-27T21:27:21Z
-- **Last updated:** 2026-08-28T22:00:00Z
+- **Last updated:** 2026-08-29T03:58:52Z
 
 ## Log
 
@@ -166,3 +166,22 @@ flickering flame, a streak pill that glows/pulses faster as the streak
 climbs (cold/warm/hot/blazing), and a card pop + number bump + floating
 "+1" whenever a streak grows (from a click or an emailed log). Honours
 `prefers-reduced-motion`.
+
+### 2026-08-29 - working tree
+Added accounts and a weekly progress view. Auth is `@convex-dev/auth` with
+the email+password provider (`convex/auth.ts`, `auth.config.ts`,
+`http.ts`); signing keys generated headlessly with `jose` and set as
+`JWT_PRIVATE_KEY` / `JWKS` / `SITE_URL`. `authTables` are in the schema and
+`habits.userId` / `entries.userId` are now `v.id("users")` (old anonymous
+string ids wiped). Every query/mutation resolves the caller with
+`getAuthUserId` instead of a `userId` arg; the anonymous-localStorage id and
+the separate `userSettings` table are gone — the account email *is* the
+address you log from, and the inbound poller looks the sender up in the
+`users` table (`convex/users.ts` `byEmail`, using Auth's built-in `email`
+index). Frontend: `App.tsx` gates on `Authenticated` / `Unauthenticated`;
+new `SignIn` (sign-in / sign-up toggle) and `Dashboard` components; a
+sign-out control and "signed in as" bar. New `entries.weeklyGrid` query +
+`WeeklyProgress` component render the last 8 weeks as a 7-cell-per-week
+completion grid (across all habits) with a per-week total. Verified: signup
+via the `auth:signIn` action creates a user with a lowercased email, and
+`users:byEmail` finds it.

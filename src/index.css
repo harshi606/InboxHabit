@@ -797,3 +797,156 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --- sign in --- */
+
+.signin-card {
+  max-width: 380px;
+  margin: 8px auto 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 28px 26px;
+  text-align: center;
+  animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.signin-card h2 {
+  font-size: 20px;
+}
+
+.signin-sub {
+  margin: 6px 0 20px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signin-form button {
+  margin-top: 2px;
+  background: linear-gradient(120deg, #8b5cf6, #ec4899);
+}
+
+.signin-switch {
+  margin-top: 16px;
+}
+
+/* --- account bar --- */
+
+.account-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+
+.account-bar strong {
+  color: var(--text);
+}
+
+/* --- weekly progress --- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.weekly {
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.weekly-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weekly-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+.weekly-grid {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.weekly-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.weekly-col-labels {
+  margin-right: 2px;
+}
+
+.wk-daylabel,
+.wk-weeklabel {
+  font-size: 9px;
+  color: var(--text-soft);
+  height: 12px;
+  line-height: 12px;
+}
+
+.wk-weeklabel {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.wk-cell {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--border);
+  transition: transform 0.12s;
+}
+
+.weekly-col:hover .wk-cell {
+  transform: scale(1.05);
+}
+
+.wk-cell[data-level="1"] {
+  background: color-mix(in srgb, #8b5cf6 30%, var(--border));
+}
+.wk-cell[data-level="2"] {
+  background: color-mix(in srgb, #8b5cf6 55%, transparent);
+}
+.wk-cell[data-level="3"] {
+  background: color-mix(in srgb, #a855f7 78%, transparent);
+}
+.wk-cell[data-level="4"] {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+}
+
+.wk-total {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}

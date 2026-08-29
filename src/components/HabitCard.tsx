@@ -27,7 +27,6 @@ export function HabitCard({
   index = 0,
 }: {
   habit: Doc<"habits">;
-  userId: string;
   index?: number;
 }) {
   const entries = useQuery(api.entries.listForHabit, { habitId: habit._id });
@@ -58,7 +57,7 @@ export function HabitCard({
     if (logging || doneToday) return;
     setLogging(true);
     try {
-      await logManual({ habitId: habit._id, userId: habit.userId });
+      await logManual({ habitId: habit._id });
     } finally {
       setLogging(false);
     }

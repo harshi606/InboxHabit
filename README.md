@@ -18,9 +18,8 @@ Built for the Convex All Gas Hackathon on [Convex](https://convex.dev).
   React hooks (no polling — data pushes to the browser).
 - **Backend:** Convex (`convex/`) — schema, queries/mutations/actions, and
   crons that poll the inbox and send the daily digest.
-- **Auth:** none. Each browser gets a random id in `localStorage` that
-  scopes its own habits — good enough for a hackathon demo, not for
-  production.
+- **Auth:** email + password via [`@convex-dev/auth`](https://labs.convex.dev/auth).
+  Your account email is also the address you log habits from.
 
 ## One-time setup
 
@@ -53,6 +52,17 @@ address so the backend can send replies from it:
 npx convex env set AGENTMAIL_INBOX_ADDRESS you-picked-this@agentmail.to
 ```
 
+Generate the auth signing keys (no interactive wizard needed) and set them
+plus `SITE_URL`:
+
+```bash
+node -e 'import("jose").then(async({generateKeyPair,exportPKCS8,exportJWK})=>{const k=await generateKeyPair("RS256",{extractable:true});const priv=await exportPKCS8(k.privateKey);const pub=await exportJWK(k.publicKey);process.stdout.write(JSON.stringify({JWT_PRIVATE_KEY:priv.trimEnd().replace(/\n/g," "),JWKS:JSON.stringify({keys:[{use:"sig",...pub}]})}))})' > .auth-keys.json
+npx convex env set "JWT_PRIVATE_KEY=$(node -e 'process.stdout.write(require("./.auth-keys.json").JWT_PRIVATE_KEY)')"
+npx convex env set "JWKS=$(node -e 'process.stdout.write(require("./.auth-keys.json").JWKS)')"
+npx convex env set SITE_URL http://localhost:5173
+rm .auth-keys.json
+```
+
 Then run both the frontend and backend dev servers together:
 
 ```bash
@@ -74,10 +84,13 @@ free tier, so polling is the primary path.)
 
 ```
 convex/
-  schema.ts           habits, entries, userSettings, processedEmails tables
-  habits.ts            create habit (Firecrawl + LLM), list
-  entries.ts           log a completion, streak calculation, live feed
-  userSettings.ts      register/look up a user's email address
+  schema.ts           auth tables + habits, entries, processedEmails
+  auth.ts             Convex Auth config (email + password)
+  auth.config.ts      JWT issuer config (the #1 auth footgun — always present)
+  http.ts             Convex Auth's .well-known / token routes
+  users.ts            me(), byEmail() for routing inbound mail
+  habits.ts           create habit (Firecrawl + LLM), list
+  entries.ts           log a completion, streak calc, live feed, weekly grid
   settings.ts          expose the shared inbox address to the frontend
   inbound.ts           poll the inbox, route each email (sender -> user, LLM -> habit)
   crons.ts             schedule the inbox poll + the daily digest
@@ -88,8 +101,9 @@ convex/
     firecrawl.ts        scrape a URL to markdown
     agentmail.ts        send an email from the shared inbox
 src/
-  App.tsx, components/  dashboard UI (EmailSetup, NewHabitForm, HabitCard)
-  lib/userId.ts         anonymous local user id
+  App.tsx              auth gate: SignIn vs Dashboard
+  components/           SignIn, Dashboard, WeeklyProgress, NewHabitForm, HabitCard
+  lib/palette.ts        per-habit colour
 ```
 
 ## Deploying the frontend

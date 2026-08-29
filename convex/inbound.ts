@@ -49,13 +49,12 @@ export const handleMessage = internalAction({
     });
     if (!claimed) return;
 
-    const userId = await ctx.runQuery(internal.userSettings.userIdForEmail, {
-      email: fromEmail,
-    });
-    if (!userId) {
-      console.error(`inbound: no registered user for sender ${fromEmail}`);
+    const user = await ctx.runQuery(internal.users.byEmail, { email: fromEmail });
+    if (!user) {
+      console.error(`inbound: no account for sender ${fromEmail}`);
       return;
     }
+    const userId = user._id;
 
     const habits = await ctx.runQuery(internal.habits.forUser, { userId });
     if (habits.length === 0) return;

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-export function NewHabitForm({ userId }: { userId: string }) {
+export function NewHabitForm() {
   const createHabit = useAction(api.habits.create);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -20,7 +20,6 @@ export function NewHabitForm({ userId }: { userId: string }) {
     setWarnings([]);
     try {
       const result = await createHabit({
-        userId,
         name: name.trim(),
         description: description.trim() || `Complete "${name.trim()}" once per day.`,
         sourceUrl: sourceUrl.trim() || undefined,

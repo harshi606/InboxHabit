@@ -1,9 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
+
   habits: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     name: v.string(),
     description: v.string(),
     tips: v.string(),
@@ -15,7 +18,7 @@ export default defineSchema({
 
   entries: defineTable({
     habitId: v.id("habits"),
-    userId: v.string(),
+    userId: v.id("users"),
     completedAt: v.number(),
     note: v.string(),
     mood: v.optional(v.string()),
@@ -24,15 +27,6 @@ export default defineSchema({
   })
     .index("by_habit", ["habitId"])
     .index("by_user", ["userId"]),
-
-  // One row per anonymous browser user. Their email address is how an inbound
-  // message to the shared habit inbox is tied back to their habits.
-  userSettings: defineTable({
-    userId: v.string(),
-    email: v.string(), // stored lowercased
-  })
-    .index("by_user", ["userId"])
-    .index("by_email", ["email"]),
 
   // Inbound emails already handled, so polling the shared inbox is idempotent.
   processedEmails: defineTable({

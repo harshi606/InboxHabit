@@ -1,25 +1,27 @@
 import { v } from "convex/values";
 import { action, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { scrapeToMarkdown } from "./lib/firecrawl";
 import { generateGenericTips, summarizeTips } from "./lib/llm";
 
-/** Live list of a user's habits, newest first. */
-export const listForUser = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const habits = await ctx.db
+/** Live list of the signed-in user's habits, newest first. */
+export const list = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
       .query("habits")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
-    return habits;
   },
 });
 
-/** Same list, for the inbound-email poller to match against. */
+/** One user's habits, for the inbound-email poller and the daily digest. */
 export const forUser = internalQuery({
-  args: { userId: v.string() },
+  args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("habits")
@@ -30,7 +32,7 @@ export const forUser = internalQuery({
 
 export const insert = internalMutation({
   args: {
-    userId: v.string(),
+    userId: v.id("users"),
     name: v.string(),
     description: v.string(),
     tips: v.string(),
@@ -46,23 +48,23 @@ export const insert = internalMutation({
 });
 
 /**
- * Create a habit:
+ * Create a habit for the signed-in user:
  *  1. (optional) Firecrawl-scrape a source URL for inspiration.
  *  2. An LLM (Groq) turns that (or the habit name alone) into a few short tips.
  * Tips are best-effort: a failure there doesn't block habit creation. Logging
- * by email works through the app's one shared inbox (see convex/inbound.ts),
- * so no per-habit inbox is provisioned.
+ * by email works through the app's one shared inbox (see convex/inbound.ts).
  */
 export const create = action({
   args: {
-    userId: v.string(),
     name: v.string(),
     description: v.string(),
     sourceUrl: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ habitId: string; warnings: string[] }> => {
-    const warnings: string[] = [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not signed in.");
 
+    const warnings: string[] = [];
     let tips = "";
     try {
       if (args.sourceUrl) {
@@ -81,7 +83,7 @@ export const create = action({
     }
 
     const habitId = await ctx.runMutation(internal.habits.insert, {
-      userId: args.userId,
+      userId,
       name: args.name,
       description: args.description,
       tips,

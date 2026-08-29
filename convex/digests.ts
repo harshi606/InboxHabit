@@ -11,23 +11,24 @@ interface DueGroup {
 }
 
 /**
- * Every registered user together with the habits they have NOT completed yet
- * today. Users with nothing due are omitted. Small scale (one row per browser
- * user), so a full scan in a once-a-day job is fine.
+ * Every account with an email together with the habits they have NOT completed
+ * yet today. Accounts with nothing due are omitted. Small scale, so a full scan
+ * in a once-a-day job is fine.
  */
 export const due = internalQuery({
   args: {},
   handler: async (ctx): Promise<DueGroup[]> => {
     const today = utcDateString(Date.now());
     const groups: DueGroup[] = [];
-    for (const setting of await ctx.db.query("userSettings").collect()) {
+    for (const user of await ctx.db.query("users").collect()) {
+      if (!user.email) continue;
       const habits = await ctx.db
         .query("habits")
-        .withIndex("by_user", (q) => q.eq("userId", setting.userId))
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
         .collect();
       const dueHabits = habits.filter((h) => h.lastCompletedDate !== today);
       if (dueHabits.length > 0) {
-        groups.push({ email: setting.email, habits: dueHabits });
+        groups.push({ email: user.email, habits: dueHabits });
       }
     }
     return groups;
@@ -50,9 +51,8 @@ function buildBody(habits: Doc<"habits">[], encouragement: string): string {
 }
 
 /**
- * Send each user one digest of their still-to-do habits for the day, with tips
- * and an LLM-written encouragement note. Idempotent enough to re-run: a second
- * send the same day just emails the habits that are still outstanding.
+ * Send each account one digest of their still-to-do habits for the day, with
+ * tips and an LLM-written encouragement note. Idempotent enough to re-run.
  */
 export const sendDaily = internalAction({
   args: {},
